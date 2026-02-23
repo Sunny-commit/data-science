@@ -1,105 +1,352 @@
-# IBM-Data-Science-Capstone-SpaceX
+# 🛡️ Data Science Fundamentals - Complete Guide
 
-# Introduction
+A **comprehensive collection** covering data science methodologies, statistical analysis, and ML fundamentals.
 
-![](https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-DS0701EN-SkillsNetwork/api/Images/landing_1.gif)
+## 🎯 Overview
 
-## Background
-SpaceX, a leader in the space industry, strives to make space travel affordable for everyone. Its accomplishments include sending spacecraft to the international space station, launching a satellite constellation that provides internet access and sending manned missions to space. SpaceX can do this because the rocket launches are relatively inexpensive ($62 million per launch) due to its novel reuse of the first stage of its Falcon 9 rocket. Other providers, which are not able to reuse the first stage, cost upwards of $165 million each. By determining if the first stage will land, we can determine the price of the launch. To do this, we can use public data and machine learning models to predict whether SpaceX – or a competing company – can reuse the first stage.
+This repository includes:
+- ✅ Statistical analysis
+- ✅ Exploratory data analysis
+- ✅ Data preprocessing
+- ✅ Hypothesis testing
+- ✅ Probability theory
+- ✅ Statistical distributions
+- ✅ Best practices
 
-## Explore
-* How payload mass, launch site, number of flights, and orbits affect first-stage landing success
-* Rate of successful landings over time
-* Best predictive model for successful landing (binary classification)
+## 📊 Exploratory Data Analysis (EDA)
 
-## Executive Summary
-The research attempts to identify the factors for a successful rocket landing. To make this determination, the following methodologies where used:
-* **Collect** data using SpaceX REST API and web scraping techniques
-* **Wrangle** data to create success/fail outcome variable
-* **Explore** data with data visualization techniques, considering the following factors: payload, launch site, flight number and yearly trend
-* **Analyze** the data with SQL, calculating the following statistics: total payload, payload range for successful launches, and total # of successful and failed outcomes
-* **Explore** launch site success rates and proximity to geographical markers
-* **Visualize** the launch sites with the most success and successful payload ranges
-* **Build Models** to predict landing outcomes using logistic regression, support vector machine (SVM), decision tree and K-nearest neighbor (KNN)
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-## Results
+class EDAToolkit:
+    """Comprehensive EDA analysis"""
+    
+    def __init__(self, dataframe):
+        self.df = dataframe
+    
+    def basic_statistics(self):
+        """Calculate descriptive statistics"""
+        stats = {
+            'shape': self.df.shape,
+            'dtypes': self.df.dtypes,
+            'missing': self.df.isnull().sum(),
+            'duplicates': self.df.duplicated().sum(),
+            'describe': self.df.describe()
+        }
+        
+        return stats
+    
+    def missing_data_analysis(self):
+        """Analyze missing data"""
+        missing_pct = (self.df.isnull().sum() / len(self.df)) * 100
+        
+        missing_df = pd.DataFrame({
+            'column': missing_pct.index,
+            'missing_count': self.df.isnull().sum().values,
+            'missing_percentage': missing_pct.values
+        }).sort_values('missing_percentage', ascending=False)
+        
+        return missing_df[missing_df['missing_percentage'] > 0]
+    
+    def handle_missing_values(self, strategy='mean'):
+        """Handle missing data"""
+        df_clean = self.df.copy()
+        
+        numerical_cols = df_clean.select_dtypes(include=[np.number]).columns
+        categorical_cols = df_clean.select_dtypes(include=['object']).columns
+        
+        # Numerical: mean/median
+        if strategy == 'mean':
+            for col in numerical_cols:
+                df_clean[col].fillna(df_clean[col].mean(), inplace=True)
+        elif strategy == 'median':
+            for col in numerical_cols:
+                df_clean[col].fillna(df_clean[col].median(), inplace=True)
+        
+        # Categorical: mode
+        for col in categorical_cols:
+            df_clean[col].fillna(df_clean[col].mode()[0], inplace=True)
+        
+        return df_clean
+    
+    def outlier_detection(self):
+        """Identify outliers using IQR"""
+        numerical_cols = self.df.select_dtypes(include=[np.number]).columns
+        
+        outliers = {}
+        for col in numerical_cols:
+            Q1 = self.df[col].quantile(0.25)
+            Q3 = self.df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            outlier_mask = (self.df[col] < lower_bound) | (self.df[col] > upper_bound)
+            outliers[col] = outlier_mask.sum()
+        
+        return outliers
+    
+    def correlation_analysis(self):
+        """Correlation matrix and heatmap"""
+        numerical_df = self.df.select_dtypes(include=[np.number])
+        correlation_matrix = numerical_df.corr()
+        
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+        plt.title('Correlation Matrix')
+        plt.show()
+        
+        return correlation_matrix
+    
+    def distribution_analysis(self):
+        """Analyze feature distributions"""
+        numerical_cols = self.df.select_dtypes(include=[np.number]).columns
+        
+        fig, axes = plt.subplots(len(numerical_cols), 1, figsize=(10, 4*len(numerical_cols)))
+        
+        for idx, col in enumerate(numerical_cols):
+            axes[idx].hist(self.df[col], bins=30, edgecolor='black')
+            axes[idx].set_title(f'Distribution of {col}')
+            axes[idx].set_xlabel(col)
+            axes[idx].set_ylabel('Frequency')
+        
+        plt.tight_layout()
+        plt.show()
+```
 
-### Exploratory Data Analysis:
-* Launch success has improved over time
-* KSC LC-39A has the highest success rate among landing sites
-* Orbits ES-L1, GEO, HEO, and SSO have a 100% success rate
+## 📈 Statistical Analysis
 
-### Visualization / Analytics:
-* Most launch sites are near the equator, and all are close to the coast
+```python
+from scipy import stats
 
-### Predictive Analytics
-* All models performed similarly on the test set. The decision tree model slightly outperformed when looking at .best_score_
+class StatisticalAnalysis:
+    """Statistical hypothesis testing"""
+    
+    @staticmethod
+    def t_test(group1, group2):
+        """Independent t-test"""
+        t_stat, p_value = stats.ttest_ind(group1, group2)
+        
+        return {
+            't_statistic': t_stat,
+            'p_value': p_value,
+            'significant': p_value < 0.05
+        }
+    
+    @staticmethod
+    def anova_test(groups):
+        """One-way ANOVA"""
+        f_stat, p_value = stats.f_oneway(*groups)
+        
+        return {
+            'f_statistic': f_stat,
+            'p_value': p_value,
+            'significant': p_value < 0.05
+        }
+    
+    @staticmethod
+    def chi_square_test(contingency_table):
+        """Chi-square test for independence"""
+        chi2, p_value, dof, expected = stats.chi2_contingency(contingency_table)
+        
+        return {
+            'chi2_statistic': chi2,
+            'p_value': p_value,
+            'degrees_of_freedom': dof,
+            'significant': p_value < 0.05
+        }
+    
+    @staticmethod
+    def pearson_correlation(x, y):
+        """Pearson correlation test"""
+        corr, p_value = stats.pearsonr(x, y)
+        
+        return {
+            'correlation': corr,
+            'p_value': p_value,
+            'significant': p_value < 0.05
+        }
+    
+    @staticmethod
+    def normality_test(data):
+        """Shapiro-Wilk normality test"""
+        stat, p_value = stats.shapiro(data)
+        
+        return {
+            'test_statistic': stat,
+            'p_value': p_value,
+            'is_normal': p_value > 0.05
+        }
+```
 
-# Methodology
+## 🔄 Data Preprocessing
 
-## Data Collection - API
-* **Request data** from SpaceX API (rocket launch data)
-* **Decode response** using .json() and convert to a dataframe using .json_normalize()
-* **Request information** about the launches from SpaceX API using custom functions
-* **Create dictionary** from the data
-* **Create dataframe** from the dictionary
-* **Filter dataframe** to contain only Falcon 9 launches
-* **Replace missing values** of Payload Mass with calculated .mean()
-* **Export data** to csv file
+```python
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 
-## Data Collection - Web Scraping
-* **Request data** (Falcon 9 launch data) from Wikipedia
-* **Create BeautifulSoup object** from HTML response
-* **Extract column names** from HTML table header
-* **Collect data** from parsing HTML tables
-* **Create dictionary** from the data
-* **Create dataframe** from the dictionary
-* **Export data** to csv file
+class PreprocessingPipeline:
+    """Complete preprocessing workflow"""
+    
+    def __init__(self):
+        self.scaler = StandardScaler()
+        self.label_encoders = {}
+    
+    def drop_duplicates(self, df):
+        """Remove duplicate rows"""
+        duplicates = df.duplicated()
+        df_cleaned = df.drop_duplicates()
+        
+        print(f"Removed {duplicates.sum()} duplicate rows")
+        
+        return df_cleaned
+    
+    def drop_constant_columns(self, df):
+        """Remove columns with no variation"""
+        constant_cols = [col for col in df.columns if df[col].nunique() <= 1]
+        df_cleaned = df.drop(columns=constant_cols)
+        
+        print(f"Removed {len(constant_cols)} constant columns: {constant_cols}")
+        
+        return df_cleaned
+    
+    def encode_categorical(self, df):
+        """Encode categorical features"""
+        df_encoded = df.copy()
+        
+        categorical_cols = df_encoded.select_dtypes(include=['object']).columns
+        
+        for col in categorical_cols:
+            le = LabelEncoder()
+            df_encoded[col] = le.fit_transform(df_encoded[col].astype(str))
+            self.label_encoders[col] = le
+        
+        return df_encoded
+    
+    def scale_features(self, X_train, X_test=None):
+        """Standardize numerical features"""
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        
+        if X_test is not None:
+            X_test_scaled = self.scaler.transform(X_test)
+            return X_train_scaled, X_test_scaled
+        
+        return X_train_scaled
+    
+    def full_pipeline(self, df):
+        """Complete preprocessing"""
+        # Drop duplicates
+        df = self.drop_duplicates(df)
+        
+        # Drop constant columns
+        df = self.drop_constant_columns(df)
+        
+        # Handle missing values
+        numerical_cols = df.select_dtypes(include=[np.number]).columns
+        for col in numerical_cols:
+            df[col].fillna(df[col].mean(), inplace=True)
+        
+        categorical_cols = df.select_dtypes(include=['object']).columns
+        for col in categorical_cols:
+            df[col].fillna(df[col].mode()[0], inplace=True)
+        
+        # Encode categorical
+        df = self.encode_categorical(df)
+        
+        return df
+```
 
-## Data Wrangling
-* **Convert outcomes** into 1 for a successful landing and 0 for an unsuccessful landing
+## 📊 Probability Distributions
 
-## EDA with Visualization
-* **Create charts** to analyze relationships and show comparisons
+```python
+from scipy.stats import norm, binom, poisson, exponential
 
-## EDA with SQL
-* **Query the data** to understand more about the data
+class ProbabilityDistributions:
+    """Common statistical distributions"""
+    
+    @staticmethod
+    def normal_distribution_analysis(data):
+        """Analyze normal distribution"""
+        mu = np.mean(data)
+        sigma = np.std(data)
+        
+        # Probability within 1 std: ~68%
+        # Probability within 2 std: ~95%
+        # Probability within 3 std: ~99.7%
+        
+        return {
+            'mean': mu,
+            'std': sigma,
+            'pdf': norm.pdf(data, mu, sigma),
+            'cdf': norm.cdf(data, mu, sigma)
+        }
+    
+    @staticmethod
+    def binomial_probability(n, p, k):
+        """Binomial probability"""
+        prob = binom.pmf(k, n, p)
+        
+        return prob
+    
+    @staticmethod
+    def poisson_probability(lambda_param, k):
+        """Poisson probability"""
+        prob = poisson.pmf(k, lambda_param)
+        
+        return prob
+    
+    @staticmethod
+    def confidence_interval(data, confidence=0.95):
+        """Calculate confidence interval"""
+        n = len(data)
+        mean = np.mean(data)
+        se = stats.sem(data)
+        
+        margin = se * stats.t.ppf((1 + confidence) / 2, n - 1)
+        
+        return {
+            'mean': mean,
+            'lower_bound': mean - margin,
+            'upper_bound': mean + margin
+        }
+```
 
-## Maps with Folium
-* **Create maps** to visualize launch sites, view launch outcomes and see distance to proximities
+## 💡 Interview Talking Points
 
-## Dashboard with Plotly Dash
-* **Create dashboard**
-* Pie chart showing successful launches
-* Scatter chart showing Payload Mass vs. Success Rate by Booster Version
+**Q: When to use t-test vs ANOVA?**
+```
+Answer:
+- t-test: 2 groups comparison
+- ANOVA: 3+ groups comparison
+- Assumes normal distribution
+- Independent vs paired
+- Variance assumptions
+```
 
-## Predictive Analytics
-* **Create** NumPy array from the Class column
-* **Standardize** the data with StandardScaler. Fit and transform the data.
-* **Split** the data using train_test_split
-* **Create** a GridSearchCV object with cv=10 for parameter optimization
-* **Apply** GridSearchCV on different algorithms: logistic regression (LogisticRegression()), support vector machine (SVC()), decision tree (DecisionTreeClassifier()), K-Nearest Neighbor (KNeighborsClassifier())
-* **Calculate** accuracy on the test data using .score() for all models
-* **Assess** the confusion matrix for all models
-* **Identify** the best model using Jaccard_Score, F1_Score and Accuracy
+**Q: Data preprocessing importance?**
+```
+Answer:
+- Garbage in, garbage out (GIGO)
+- Missing data handling critical
+- Outlier impact significant
+- Encoding essential for categorical
+- Scaling for distance-based models
+```
 
-# Conclusion
-* **Model Performance:** The models performed similarly on the test set with the decision tree model slightly outperforming
-* **Equator:** Most of the launch sites are near the equator for an additional natural boost - due to the rotational speed of earth - which helps save the cost of putting in extra fuel and boosters
-* **Coast:** All the launch sites are close to the coast
-* **Launch Success:** Increases over time
-* **KSC LC-39A:** Has the highest success rate among launch sites. Has a 100% success rate for launches less than 5,500 kg 
-* **Orbits:** ES-L1, GEO, HEO, and SSO have a 100% success rate
-* **Payload Mass:** Across all launch sites, the higher the payload mass (kg), the higher the success rate
+## 🌟 Portfolio Value
 
-## Additional Things to Consider
-* **Dataset:** A larger dataset will help build on the predictive analytics results to help understand if the findings can be generalizable to a larger data set
-* **Feature Analysis / PCA:** Additional feature analysis or principal component analysis should be conducted to see if it can help improve accuracy
-* **XGBoost:** Is a powerful model which was not utilized in this study. It would be interesting to see if it outperforms the other classification models
+✅ EDA mastery
+✅ Statistical testing
+✅ Data preprocessing
+✅ Hypothesis testing
+✅ Probability knowledge
+✅ Distribution analysis
+✅ Best practices
 
+---
 
-
-
-
-
+**Technologies**: Pandas, NumPy, SciPy, Scikit-learn
 
